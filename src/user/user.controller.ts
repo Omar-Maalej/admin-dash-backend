@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query, Put } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from 'src/auth/guards/auth-guard';
+import { Response } from 'express';
+import { User } from './entities/user.entity';
+import { plainToInstance } from 'class-transformer';
 @UseGuards(AuthGuard)
 @Controller('user')
 export class UserController {
@@ -11,20 +14,26 @@ export class UserController {
  
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
+    if(!createUserDto.password)createUserDto.password = 'user';
     return this.userService.create(createUserDto);  
   }
   @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
+async findAll(@Query('range') range: string, @Res() res: Response) {
+  const parsedRange = JSON.parse(range || '[0, 10]');
+  const [start, end] = parsedRange;
+  const [users, total] = await this.userService.findAll(start, end - start + 1);
+
+  res.set('Content-Range', `users ${start}-${end}/${total}`);
+  return res.json(users);
+}
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string) : Promise<User> {
     return this.userService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) : Promise<User> {
     return this.userService.update(+id, updateUserDto);
   }
 

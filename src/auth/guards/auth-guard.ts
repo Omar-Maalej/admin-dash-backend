@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
+import { UserRoles } from "src/user/entities/user-roles.enum";
 
 @Injectable()
 export class AuthGuard implements CanActivate{
@@ -22,7 +23,7 @@ export class AuthGuard implements CanActivate{
       });
       request['user'] = payload;
 
-      if(payload.role === 'admin'){
+      if(payload.role === UserRoles.ADMIN){
         return true;
       } else {
         throw new ForbiddenException();

@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { UserRoles } from "./user-roles.enum";
 import { Order } from "src/order/entities/order.entity";
+import { Exclude } from "class-transformer";
 
 @Entity()
 export class User {
@@ -11,10 +12,9 @@ export class User {
   @Column()
   lastName: string;
   @Column()
-  adress: string;
+  address: string;
   @Column({unique: true})
   email: string;
-
 
 
   @Column({
@@ -24,10 +24,12 @@ export class User {
   })
   role : string;
   @Column()
+  @Exclude()
   password: string;
   @Column({ })
+  @Exclude()
   salt: string;
-  
+  @Exclude()
   @OneToMany(() => Order, order => order.user)
   orders: Order[];
 }

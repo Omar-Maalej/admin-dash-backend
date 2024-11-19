@@ -46,8 +46,8 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  findAll() {
-    return this.orderRepository.find();
+  async findAll(skip: number, take: number): Promise<[Order[], number]> {
+    return  await this.orderRepository.findAndCount({ skip, take });
   }
 
   async findOne(id: number) {
@@ -59,15 +59,41 @@ export class OrderService {
   }
 
   async update(id: number, updateOrderDto: UpdateOrderDto) {
-    const order = await this.orderRepository.preload({
-      id,
-      ...updateOrderDto
-    });
-
-    if(!order)
+    const { total, userId, productIds } = updateOrderDto;
+  
+    const existingOrder = await this.orderRepository.findOne({ where: { id }, relations: ['user', 'products'] });
+    if (!existingOrder) {
       throw new NotFoundException('Order not found');
-
-    return this.orderRepository.save(order);
+    }
+  
+    let user = existingOrder.user;
+    if (userId && userId !== existingOrder.user.id) {
+      user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+    }
+  
+    let products = existingOrder.products;
+    if (productIds && productIds.length > 0) {
+      products = await this.productRepository.findBy({ id: In(productIds) });
+      if (!products || products.length === 0) {
+        throw new NotFoundException('No products found');
+      }
+  
+      if (products.length !== productIds.length) {
+        throw new NotFoundException('Some products not found');
+      }
+    }
+  
+    const updatedOrder = this.orderRepository.create({
+      id, // Include the ID for update
+      total: total ?? existingOrder.total,
+      user,
+      products,
+    });
+  
+    return this.orderRepository.save(updatedOrder);
   }
 
   remove(id: number) {

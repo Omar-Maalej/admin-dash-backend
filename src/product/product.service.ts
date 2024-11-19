@@ -16,8 +16,8 @@ export class ProductService {
     return await this.productRepository.save(createProductDto);
   }
 
-  async findAll() {
-    return await this.productRepository.find();
+  async findAll(skip: number, take: number): Promise<[Product[], number]> {
+    return  await this.productRepository.findAndCount({ skip, take });
   }
 
   async findOne(id: number) {

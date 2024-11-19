@@ -6,6 +6,7 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 
+
 @Injectable()
 export class UserService {
 
@@ -16,6 +17,12 @@ export class UserService {
 
 
   async create(createUserDto: CreateUserDto) {
+    const emailExists = await this.userRepository.findOne({ where: { email: createUserDto.email } });
+    
+    if(emailExists) {
+      throw new ConflictException('email already exists');
+    }
+
     try {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
@@ -38,19 +45,26 @@ export class UserService {
     }
   }
   
-  async findAll() {
-    return await this.userRepository.find();
+  async findAll(skip: number, take: number): Promise<[User[], number]> {
+    const [users , total] =  await this.userRepository.findAndCount({ skip, take });
+    users.forEach(user => {
+      delete user.password;
+      delete user.salt;
+    });
+    return [users, total];
   }
 
-  async findOne(id: number) {
+  async findOne(id: number) : Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`le user d'id ${id} n'existe pas`);
     }
+    delete user.password;
+    delete user.salt;
     return await user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     const newUser = await this.userRepository.preload({ id, ...updateUserDto });
     if (newUser) {
       return await this.userRepository.save(newUser);

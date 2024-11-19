@@ -12,7 +12,7 @@ export class AuthController {
   login(
     @Body() userData: UserLoginDto
   ) {
-
+    console.log(userData);
     return this.authService.login(userData);
   }
 }
