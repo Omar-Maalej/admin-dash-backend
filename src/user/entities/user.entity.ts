@@ -13,6 +13,9 @@ export class User {
   adress: string;
   @Column({unique: true})
   email: string;
+
+
+  
   @Column({
     type : 'enum',
     enum : UserRoles,
