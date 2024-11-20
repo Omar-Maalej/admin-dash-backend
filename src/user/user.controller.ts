@@ -6,7 +6,7 @@ import { AuthGuard } from 'src/auth/guards/auth-guard';
 import { Response } from 'express';
 import { User } from './entities/user.entity';
 import { plainToInstance } from 'class-transformer';
-//@UseGuards(AuthGuard)
+@UseGuards(AuthGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
